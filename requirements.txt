@@ -1,4 +1,4 @@
 streamlit
-langchain
-openai
-tiktoken
+hugchat
+streamlit-chat
+streamlit-extras

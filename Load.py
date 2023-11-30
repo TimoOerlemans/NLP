@@ -1,43 +1,59 @@
-# first of all we need to import all the libraries that we need
 import streamlit as st
-from langchain import OpenAI
-from langchain.docstore.document import Document
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.chains.summarize import load_summarize_chain
+from streamlit_chat import message
+from streamlit_extras.colored_header import colored_header
+from streamlit_extras.add_vertical_space import add_vertical_space
+from hugchat import hugchat
 
-# Function to generate response from the LLM model. This function will be called when the user
-# submits the form.
-def generate_response(txt):
-    # Instantiate the LLM model
-    llm = OpenAI(temperature=0, openai_api_key=openai_api_key)
-    # Split text
-    text_splitter = CharacterTextSplitter()
-    texts = text_splitter.split_text(txt)
-    # Create multiple documents
-    docs = [Document(page_content=t) for t in texts]
-    # Text summarization
-    chain = load_summarize_chain(llm, chain_type='map_reduce')
-    return chain.run(docs)
+st.set_page_config(page_title="HugChat - An LLM-powered Streamlit app")
+
+with st.sidebar:
+    st.title('🤗💬 HugChat App')
+    st.markdown('''
+    ## About
+    This app is an LLM-powered chatbot built using:
+    - [Streamlit](<https://streamlit.io/>)
+    - [HugChat](<https://github.com/Soulter/hugging-chat-api>)
+    - [OpenAssistant/oasst-sft-6-llama-30b-xor](<https://huggingface.co/OpenAssistant/oasst-sft-6-llama-30b-xor>) LLM model
+
+    💡 Note: No API key required!
+    ''')
+    add_vertical_space(5)
+    st.write('Made with ❤️ by [Data Professor](<https://youtube.com/dataprofessor>)')
+
+if 'generated' not in st.session_state:
+    st.session_state['generated'] = ["I'm HugChat, How may I help you?"]
+if 'past' not in st.session_state:
+    st.session_state['past'] = ['Hi!']
+
+input_container = st.container()
+colored_header(label='', description='', color_name='blue-30')
+response_container = st.container()
+
+# User input
+## Function for taking user provided prompt as input
+def get_text():
+    input_text = st.text_input("You: ", "", key="input")
+    return input_text
+## Applying the user input box
+with input_container:
+    user_input = get_text()
+
+# Response output
+## Function for taking user prompt as input followed by producing AI generated responses
+def generate_response(prompt):
+    chatbot = hugchat.ChatBot()
+    response = chatbot.chat(prompt)
+    return response
 
 
-# Page title
-st.set_page_config(page_title='Text Summarization App')
-st.title('Text Summarization App')
+## Conditional display of AI generated responses as a function of user provided prompts
+with response_container:
+    if user_input:
+        response = generate_response(user_input)
+        st.session_state.past.append(user_input)
+        st.session_state.generated.append(response)
 
-
-# Text input field
-txt_input = st.text_area('Your text:', '', height=200)
-
-
-# Form to accept user's text input for summarization
-result = []
-with st.form('summarize_form', clear_on_submit=True):
-    openai_api_key = st.text_input('OpenAI API Key', type = 'password', disabled=not txt_input)
-    submitted = st.form_submit_button('Generate Summary')
-    if submitted and openai_api_key.startswith('sk-'):
-        with st.spinner('Generating...'):
-            response = generate_response(txt_input)
-            result.append(response)
-            del openai_api_key
-if len(result):
-    st.info(response)
+    if st.session_state['generated']:
+        for i in range(len(st.session_state['generated'])):
+            message(st.session_state['past'][i], is_user=True, key=str(i) + '_user')
+            message(st.session_state['generated'][i], key=str(i))
