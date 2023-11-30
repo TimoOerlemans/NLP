@@ -3,7 +3,7 @@ from hugchat import hugchat
 from hugchat.login import Login
 
 # App title
-st.set_page_config(page_title="🤗💬 HugChat")
+st.set_page_config(page_title="Chatbot LLM")
 
 # Hugging Face Credentials
 # here I create a sidebar with the login attached to it
